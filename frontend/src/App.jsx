@@ -90,7 +90,7 @@ function App() {
           <>
             <div className="hero">
               <h2>Ancient Wisdom, Modern Quest</h2>
-              <p>Explore the vast repository of Vedic texts. Select a category to begin your journey.</p>
+              <p>Explore the vast repository of Vedic texts.<br />Select a category to begin your journey.</p>
             </div>
             <div className="category-grid">
               {categories.map((cat) => (

@@ -5,7 +5,7 @@
   width: 100vw;
   background-size: cover;
   background-position: center;
-  background-image: url('https://images.unsplash.com/photo-1599839619722-39751411ea63?q=80&w=2070&auto=format&fit=crop');
+  background-image: url('/bg.jpg');
   /* Placeholder mystical background */
   position: relative;
 }
@@ -60,6 +60,7 @@ header h1 {
   margin-bottom: 1rem;
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -67,6 +68,7 @@ header h1 {
   font-size: 1.25rem;
   color: #cbd5e1;
   max-width: 600px;
+  margin: 0 auto;
 }
 
 .category-grid {
