@@ -68,6 +68,8 @@ Chapter [X], Verse [Y]
 [The Original Sanskrit Shloka]
 [The Translation/Meaning]
 
+[Provide 2-3 highly actionable, modern-day steps the user can take today to apply this wisdom to their daily life, career, or relationships.]
+
 Do not deviate from this format. Emulate a wise scholar."""
 
     prompt = f"User Query: {query}\n\nRetrieved Context:\n{context_str}\n\nPlease answer the user's query."
