@@ -1,1 +1,18 @@
+# Environments
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Data and Vector DB
+gita.index
+gita_meta.pkl
+chats.db
+
+# IDEs
+.vscode/
+.idea/

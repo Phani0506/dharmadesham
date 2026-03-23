@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowRight, Send, ChevronLeft, Loader2 } from 'lucide-react';
+import { ArrowRight, Send, ChevronLeft, Loader2, Menu, X, MessageSquare } from 'lucide-react';
 import './App.css';
 
 const API_URL = '/api/chat'; // Proxied to backend via Vite
@@ -9,6 +9,9 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const categories = [
@@ -28,6 +31,37 @@ function App() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  useEffect(() => {
+    fetchChats();
+  }, []);
+
+  const fetchChats = async () => {
+    try {
+      const res = await fetch('/api/chats');
+      if (res.ok) {
+        const data = await res.json();
+        setChatHistory(data);
+      }
+    } catch (e) {
+      console.error('Failed to load chats', e);
+    }
+  };
+
+  const handleLoadChat = async (chatId) => {
+    try {
+      const res = await fetch(`/api/chats/${chatId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentChatId(chatId);
+        setMessages(data);
+        setCurrentView('CHAT');
+        setIsSidebarOpen(false);
+      }
+    } catch (e) {
+      console.error('Failed to load chat history', e);
+    }
+  };
+
   const handleCategoryClick = (category) => {
     if (category.disabled) return;
     if (category.id === 'smritis') {
@@ -35,16 +69,24 @@ function App() {
     }
   };
 
-  const handleGitaClick = () => {
-    setCurrentView('CHAT');
-    // Add initial greeting
-    if (messages.length === 0) {
-      setMessages([
-        {
-          role: 'bot',
-          content: 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?'
-        }
-      ]);
+  const handleGitaClick = async () => {
+    setIsSidebarOpen(false);
+    try {
+      const res = await fetch('/api/chats', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentChatId(data.chat_id);
+        setMessages([
+          {
+            role: 'bot',
+            content: 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?'
+          }
+        ]);
+        setCurrentView('CHAT');
+        fetchChats();
+      }
+    } catch (e) {
+      console.error('Failed to start a new chat', e);
     }
   };
 
@@ -61,7 +103,7 @@ function App() {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, chat_id: currentChatId }),
       });
 
       if (!response.ok) {
@@ -70,6 +112,11 @@ function App() {
 
       const data = await response.json();
       setMessages((prev) => [...prev, { role: 'bot', content: data.answer }]);
+      
+      // Refresh history to update title
+      if (messages.length <= 2) {
+        fetchChats();
+      }
     } catch (error) {
       setMessages((prev) => [...prev, { role: 'bot', content: 'An error occurred while consulting the ancient texts: ' + error.message }]);
     } finally {
@@ -81,9 +128,41 @@ function App() {
     <div className="app-container">
       <div className="overlay"></div>
 
-      <header onClick={() => setCurrentView('LANDING')}>
-        <h1>Dharmadesham</h1>
+      <header>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+            <Menu size={24} color="#e2e8f0" />
+          </button>
+          <h1 onClick={() => setCurrentView('LANDING')}>Dharmadesham</h1>
+        </div>
       </header>
+
+      <div className={`history-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h2>Chat History</h2>
+          <button className="close-btn" onClick={() => setIsSidebarOpen(false)}>
+            <X size={24} />
+          </button>
+        </div>
+        <div className="sidebar-content">
+          <button className="new-chat-btn" onClick={handleGitaClick}>
+            + New Chat
+          </button>
+          <div className="history-list">
+            {chatHistory.map((chat) => (
+              <div 
+                key={chat.id} 
+                className={`history-item ${chat.id === currentChatId ? 'active' : ''}`}
+                onClick={() => handleLoadChat(chat.id)}
+              >
+                <div style={{minWidth: '20px'}}><MessageSquare size={16} /></div>
+                <div className="history-title">{chat.title || 'New Chat'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
 
       <div className="content-wrapper">
         {currentView === 'LANDING' && (
@@ -124,7 +203,7 @@ function App() {
                 <ChevronLeft size={20} />
                 <span>Back to Smritis</span>
               </button>
-              <h2>Bhagavad Gita Oracle</h2>
+              <h2>Bhagavad Gita</h2>
               <div style={{ width: 40 }}></div> {/* Spacer */}
             </div>
 
