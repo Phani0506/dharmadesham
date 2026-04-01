@@ -17,6 +17,13 @@ def init_db():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Add text_type column if it doesn't exist
+    try:
+        c.execute("ALTER TABLE chats ADD COLUMN text_type TEXT DEFAULT 'GITA'")
+    except sqlite3.OperationalError:
+        pass # Column already exists
+        
     c.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,11 +37,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-def create_chat(title="New Chat"):
+def create_chat(title="New Chat", text_type="GITA"):
     conn = get_connection()
     c = conn.cursor()
     chat_id = str(uuid.uuid4())
-    c.execute("INSERT INTO chats (id, title) VALUES (?, ?)", (chat_id, title))
+    c.execute("INSERT INTO chats (id, title, text_type) VALUES (?, ?, ?)", (chat_id, title, text_type))
     conn.commit()
     conn.close()
     return chat_id
@@ -43,7 +50,7 @@ def get_chats():
     conn = get_connection()
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
-    c.execute("SELECT id, title, created_at, updated_at FROM chats ORDER BY updated_at DESC")
+    c.execute("SELECT id, title, text_type, created_at, updated_at FROM chats ORDER BY updated_at DESC")
     rows = c.fetchall()
     conn.close()
     return [dict(row) for row in rows]

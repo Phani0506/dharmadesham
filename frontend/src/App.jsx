@@ -11,6 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [currentTextType, setCurrentTextType] = useState('GITA');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
@@ -52,6 +53,10 @@ function App() {
       const res = await fetch(`/api/chats/${chatId}`);
       if (res.ok) {
         const data = await res.json();
+        const chatInfo = chatHistory.find(c => c.id === chatId);
+        if (chatInfo && chatInfo.text_type) {
+          setCurrentTextType(chatInfo.text_type);
+        }
         setCurrentChatId(chatId);
         setMessages(data);
         setCurrentView('CHAT');
@@ -69,19 +74,22 @@ function App() {
     }
   };
 
-  const handleGitaClick = async () => {
+  const handleTextClick = async (textType) => {
     setIsSidebarOpen(false);
+    setCurrentTextType(textType);
     try {
-      const res = await fetch('/api/chats', { method: 'POST' });
+      const res = await fetch('/api/chats', { 
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text_type: textType }),
+      });
       if (res.ok) {
         const data = await res.json();
         setCurrentChatId(data.chat_id);
-        setMessages([
-          {
-            role: 'bot',
-            content: 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?'
-          }
-        ]);
+        const greeting = textType === 'RAMAYANA' 
+          ? 'Welcome, seeker. I am an oracle of the Ramayana. How may its boundless wisdom guide you today?'
+          : 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?';
+        setMessages([{ role: 'bot', content: greeting }]);
         setCurrentView('CHAT');
         fetchChats();
       }
@@ -103,7 +111,7 @@ function App() {
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, chat_id: currentChatId }),
+        body: JSON.stringify({ query, chat_id: currentChatId, text_type: currentTextType }),
       });
 
       if (!response.ok) {
@@ -145,10 +153,13 @@ function App() {
           </button>
         </div>
         <div className="sidebar-content">
-          <button className="new-chat-btn" onClick={handleGitaClick}>
-            + New Chat
+          <button className="new-chat-btn" onClick={() => handleTextClick('GITA')}>
+            + New Gita Chat
           </button>
-          <div className="history-list">
+          <button className="new-chat-btn" onClick={() => handleTextClick('RAMAYANA')} style={{marginTop: '10px'}}>
+            + New Ramayana Chat
+          </button>
+          <div className="history-list" style={{marginTop: '20px'}}>
             {chatHistory.map((chat) => (
               <div 
                 key={chat.id} 
@@ -156,7 +167,7 @@ function App() {
                 onClick={() => handleLoadChat(chat.id)}
               >
                 <div style={{minWidth: '20px'}}><MessageSquare size={16} /></div>
-                <div className="history-title">{chat.title || 'New Chat'}</div>
+                <div className="history-title">[{chat.text_type === 'RAMAYANA' ? 'Ramayana' : 'Gita'}] {chat.title || 'New Chat'}</div>
               </div>
             ))}
           </div>
@@ -187,10 +198,16 @@ function App() {
 
         {currentView === 'SUBMENU' && (
           <div className="category-grid" style={{ maxWidth: '400px' }}>
-            <div className="category-card" onClick={handleGitaClick}>
+            <div className="category-card" onClick={() => handleTextClick('GITA')}>
               <h3>Bhagavad Gita</h3>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '0.5rem' }}>
                 The Song of God
+              </p>
+            </div>
+            <div className="category-card" onClick={() => handleTextClick('RAMAYANA')}>
+              <h3>Ramayana</h3>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                The Epic of Rama
               </p>
             </div>
           </div>
@@ -203,7 +220,7 @@ function App() {
                 <ChevronLeft size={20} />
                 <span>Back to Smritis</span>
               </button>
-              <h2>Bhagavad Gita</h2>
+              <h2>{currentTextType === 'RAMAYANA' ? 'Ramayana' : 'Bhagavad Gita'}</h2>
               <div style={{ width: 40 }}></div> {/* Spacer */}
             </div>
 
