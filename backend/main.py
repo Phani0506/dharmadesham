@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import rag
 import rag_ramayana
+import rag_mahabharata
 import database
 
 database.init_db()
@@ -36,6 +37,8 @@ async def create_chat_endpoint(req: CreateChatRequest = None):
     
     if text_type == "RAMAYANA":
         greeting = 'Welcome, seeker. I am an oracle of the Ramayana. How may its boundless wisdom guide you today?'
+    elif text_type == "MAHABHARATA":
+        greeting = 'Jai Shri Krishna. I am here to illuminate the eternal wisdom of the Mahabharata. What seeks your heart today?'
     else:
         greeting = 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?'
         
@@ -63,6 +66,9 @@ async def chat_endpoint(request: ChatRequest):
         if request.text_type == "RAMAYANA":
             verses = rag_ramayana.retrieve_verses(request.query)
             answer = rag_ramayana.generate_answer(request.query, verses)
+        elif request.text_type == "MAHABHARATA":
+            verses = rag_mahabharata.retrieve_verses(request.query)
+            answer = rag_mahabharata.generate_answer(request.query, verses)
         else:
             verses = rag.retrieve_verses(request.query)
             answer = rag.generate_answer(request.query, verses)

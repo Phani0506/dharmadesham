@@ -88,6 +88,8 @@ function App() {
         setCurrentChatId(data.chat_id);
         const greeting = textType === 'RAMAYANA' 
           ? 'Welcome, seeker. I am an oracle of the Ramayana. How may its boundless wisdom guide you today?'
+          : textType === 'MAHABHARATA'
+          ? 'Jai Shri Krishna. I am here to illuminate the eternal wisdom of the Mahabharata. What seeks your heart today?'
           : 'O seeker of Truth, I am here to share the profound wisdom of the Bhagavad Gita. What queries burden your mind today?';
         setMessages([{ role: 'bot', content: greeting }]);
         setCurrentView('CHAT');
@@ -159,6 +161,9 @@ function App() {
           <button className="new-chat-btn" onClick={() => handleTextClick('RAMAYANA')} style={{marginTop: '10px'}}>
             + New Ramayana Chat
           </button>
+          <button className="new-chat-btn" onClick={() => handleTextClick('MAHABHARATA')} style={{marginTop: '10px'}}>
+            + New Mahabharata Chat
+          </button>
           <div className="history-list" style={{marginTop: '20px'}}>
             {chatHistory.map((chat) => (
               <div 
@@ -167,7 +172,7 @@ function App() {
                 onClick={() => handleLoadChat(chat.id)}
               >
                 <div style={{minWidth: '20px'}}><MessageSquare size={16} /></div>
-                <div className="history-title">[{chat.text_type === 'RAMAYANA' ? 'Ramayana' : 'Gita'}] {chat.title || 'New Chat'}</div>
+                <div className="history-title">[{chat.text_type === 'RAMAYANA' ? 'Ramayana' : chat.text_type === 'MAHABHARATA' ? 'Mahabharata' : 'Gita'}] {chat.title || 'New Chat'}</div>
               </div>
             ))}
           </div>
@@ -210,6 +215,12 @@ function App() {
                 The Epic of Rama
               </p>
             </div>
+            <div className="category-card" onClick={() => handleTextClick('MAHABHARATA')}>
+              <h3>Mahabharata <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>(Chapter 1)</span></h3>
+              <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                The Great Battle of Dharma
+              </p>
+            </div>
           </div>
         )}
 
@@ -220,7 +231,7 @@ function App() {
                 <ChevronLeft size={20} />
                 <span>Back to Smritis</span>
               </button>
-              <h2>{currentTextType === 'RAMAYANA' ? 'Ramayana' : 'Bhagavad Gita'}</h2>
+              <h2>{currentTextType === 'RAMAYANA' ? 'Ramayana' : currentTextType === 'MAHABHARATA' ? 'Mahabharata (Ch. 1)' : 'Bhagavad Gita'}</h2>
               <div style={{ width: 40 }}></div> {/* Spacer */}
             </div>
 
