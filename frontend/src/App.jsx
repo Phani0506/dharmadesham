@@ -216,7 +216,7 @@ function App() {
               </p>
             </div>
             <div className="category-card" onClick={() => handleTextClick('MAHABHARATA')}>
-              <h3>Mahabharata <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>(Chapter 1)</span></h3>
+              <h3>Mahabharata</h3>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '0.5rem' }}>
                 The Great Battle of Dharma
               </p>
@@ -231,7 +231,7 @@ function App() {
                 <ChevronLeft size={20} />
                 <span>Back to Smritis</span>
               </button>
-              <h2>{currentTextType === 'RAMAYANA' ? 'Ramayana' : currentTextType === 'MAHABHARATA' ? 'Mahabharata (Ch. 1)' : 'Bhagavad Gita'}</h2>
+              <h2>{currentTextType === 'RAMAYANA' ? 'Ramayana' : currentTextType === 'MAHABHARATA' ? 'Mahabharata' : 'Bhagavad Gita'}</h2>
               <div style={{ width: 40 }}></div> {/* Spacer */}
             </div>
 

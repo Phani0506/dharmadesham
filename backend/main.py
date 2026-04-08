@@ -78,4 +78,11 @@ async def chat_endpoint(request: ChatRequest):
             
         return ChatResponse(answer=answer)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        if "429" in error_msg or "quota" in error_msg.lower() or "503" in error_msg:
+            answer = "The Oracle is currently overwhelmed by seekers (API Rate Limit). Please wait a few moments and try again."
+        else:
+            answer = f"The Oracle faced an unexpected disturbance: {error_msg}"
+        
+        # Don't save errors to DB to avoid polluting chat history
+        return ChatResponse(answer=answer)

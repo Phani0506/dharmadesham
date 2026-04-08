@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
@@ -11,6 +12,34 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 client = None
 if API_KEY and API_KEY != "YOUR_API_KEY_HERE":
     client = genai.Client(api_key=API_KEY)
+
+MODEL_FALLBACK = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite-001",
+]
+
+def generate_with_fallback(prompt: str, system_instruction: str, config_kwargs: dict = None):
+    for model in MODEL_FALLBACK:
+        try:
+            cfg = genai.types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                **(config_kwargs or {})
+            )
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=cfg,
+            )
+            return response.text
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "503" in err or "UNAVAILABLE" in err or "EXHAUSTED" in err:
+                time.sleep(1)
+                continue
+            raise
+    raise Exception("All Gemini models are currently rate-limited. Please wait a minute and try again.")
 
 _index = None
 _metadata = None
@@ -34,7 +63,7 @@ def load_data():
         else:
             raise Exception("Metadata not found. Run ingest_mahabharata.py first.")
 
-def retrieve_verses(query: str, top_k: int = 5):
+def retrieve_verses(query: str, top_k: int = 2):
     """Retrieves top_k most relevant verses. Higher top_k grounds the LLM better."""
     load_data()
     
@@ -88,13 +117,4 @@ Do not deviate from this format. Accuracy and truthfulness are your highest duti
 
     prompt = f"User Query: {query}\n\nRetrieved Context (USE ONLY THIS — DO NOT HALLUCINATE):\n{context_str}\n\nPlease answer the user's query."
     
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=genai.types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            temperature=0.0,   # Zero creativity — deterministic, factual output only
-            top_p=0.9,
-        )
-    )
-    return response.text
+    return generate_with_fallback(prompt, system_instruction, {"temperature": 0.0, "top_p": 0.9})

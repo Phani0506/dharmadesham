@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
@@ -11,6 +12,36 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 client = None
 if API_KEY and API_KEY != "YOUR_API_KEY_HERE":
     client = genai.Client(api_key=API_KEY)
+
+# Models to try in order — fallback automatically if one is rate-limited
+MODEL_FALLBACK = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite-001",
+]
+
+def generate_with_fallback(prompt: str, system_instruction: str, config_kwargs: dict = None):
+    """Try each model in order; return first successful response."""
+    for model in MODEL_FALLBACK:
+        try:
+            cfg = genai.types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                **(config_kwargs or {})
+            )
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+                config=cfg,
+            )
+            return response.text
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "503" in err or "UNAVAILABLE" in err or "EXHAUSTED" in err:
+                time.sleep(1)
+                continue  # try next model
+            raise  # re-raise unexpected errors
+    raise Exception("All Gemini models are currently rate-limited. Please wait a minute and try again.")
 
 _index = None
 _metadata = None
@@ -34,7 +65,7 @@ def load_data():
         else:
             raise Exception("Metadata not found. Run ingest.py first.")
 
-def retrieve_verses(query: str, top_k: int = 3):
+def retrieve_verses(query: str, top_k: int = 2):
     load_data()
     
     query_embedding = _embed_model.encode([query], convert_to_numpy=True)
@@ -78,11 +109,4 @@ Do not deviate from this format. Emulate a wise scholar."""
 
     prompt = f"User Query: {query}\n\nRetrieved Context:\n{context_str}\n\nPlease answer the user's query."
     
-    response = client.models.generate_content(
-        model="gemini-2.5-flash", 
-        contents=prompt,
-        config=genai.types.GenerateContentConfig(
-            system_instruction=system_instruction,
-        )
-    )
-    return response.text
+    return generate_with_fallback(prompt, system_instruction)
