@@ -134,8 +134,15 @@ function App() {
     }
   };
 
+  let bgImage = '/bg.jpg';
+  if (currentView === 'CHAT') {
+    if (currentTextType === 'RAMAYANA') bgImage = '/1.jpg';
+    else if (currentTextType === 'MAHABHARATA') bgImage = '/2.jpg';
+    else if (currentTextType === 'GITA') bgImage = '/3.jpg';
+  }
+
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ backgroundImage: `url(${bgImage})` }}>
       <div className="overlay"></div>
 
       <header>
